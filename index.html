@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AKB48 劇場公演ソート</title>
+  <meta name="description" content="19公演から好きな10公演を選び、二択比較で自分だけのAKB48劇場公演ランキングを作るソートです。" />
+  <style>
+    :root {
+      --bg: #fff8fb;
+      --panel: rgba(255,255,255,.96);
+      --text: #241f22;
+      --muted: #786d74;
+      --line: #eadfe4;
+      --pink: #e75d96;
+      --pink-strong: #d03a77;
+      --pink-soft: #ffe9f2;
+      --shadow: 0 18px 44px rgba(93, 38, 66, .12);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(232,93,150,.14), transparent 24%),
+        radial-gradient(circle at 100% 20%, rgba(252,199,221,.18), transparent 22%),
+        linear-gradient(180deg, #fff 0%, var(--bg) 45%, #fff 100%);
+    }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid rgba(232,93,150,.26); outline-offset: 3px; }
+    .hidden { display: none !important; }
+
+    .shell {
+      height: 100%;
+      width: min(1180px, calc(100% - 18px));
+      margin: 0 auto;
+      padding: 10px 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .hero {
+      flex: 0 0 auto;
+      padding: 10px 10px 4px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+      color: var(--pink-strong);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+    h1 {
+      margin: 10px 0 6px;
+      font-size: clamp(24px, 4.3vw, 40px);
+      line-height: 1.08;
+      letter-spacing: -.03em;
+    }
+    .hero p {
+      margin: 0 auto;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .screen {
+      flex: 1 1 auto;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid rgba(234,223,228,.96);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .step {
+      color: var(--pink-strong);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .screen-head h2 {
+      margin: 4px 0;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .head-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .counter {
+      min-width: 88px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--pink-soft);
+      color: var(--pink-strong);
+      text-align: center;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+    .counter strong { display: block; font-size: 22px; }
+    .counter span { font-size: 11px; }
+
+    .ghost, .secondary, .primary, .nav-btn, .choice-btn {
+      border: 0;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, border-color .15s ease;
+    }
+    .ghost:hover, .secondary:hover, .primary:hover, .nav-btn:hover, .choice-btn:hover { transform: translateY(-1px); }
+    .ghost {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .secondary {
+      padding: 11px 14px;
+      border-radius: 13px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .primary {
+      padding: 13px 18px;
+      border-radius: 14px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--pink), var(--pink-strong));
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(208,58,119,.24);
+    }
+    .primary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .screen-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px 16px;
+      gap: 12px;
+    }
+
+    .toolbar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .mini-note {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .nav-group {
+      display: inline-flex;
+      gap: 8px;
+    }
+    .nav-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--pink-strong);
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .track-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      border-radius: 20px;
+      border: 1px solid #f0e5ea;
+      background: linear-gradient(180deg, #fff 0%, #fff9fc 100%);
+      overflow: hidden;
+      padding: 12px;
+      display: flex;
+      align-items: stretch;
+    }
+    .stage-track {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      width: 100%;
+      overscroll-behavior-x: contain;
+    }
+    .stage-track::-webkit-scrollbar { display: none; }
+    .stage-page {
+      flex: 0 0 100%;
+      min-width: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .stage-card {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(82px, 40%) minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: #fff;
+      user-select: none;
+      text-align: left;
+      box-shadow: 0 10px 24px rgba(82,35,57,.06);
+    }
+    .stage-card:hover { box-shadow: 0 16px 32px rgba(82,35,57,.1); border-color: rgba(232,93,150,.38); }
+    .stage-card.selected {
+      border-color: rgba(232,93,150,.7);
+      background: linear-gradient(180deg, #fff 0%, #fff2f8 100%);
+      box-shadow: 0 16px 36px rgba(208,58,119,.15);
+    }
+    .stage-card.disabled { opacity: .45; cursor: not-allowed; }
+    .check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid #d7c8d0;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.84);
+      color: white;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .selected .check {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+    .selected .check::before { content: "✓"; }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(20,20,20,.05);
+      background: #f5f2f3;
+      display: grid;
+      place-items: center;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+    .meta {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      min-width: 0;
+      min-height: 0;
+    }
+    .origin-tag {
+      display: inline-flex;
+      align-self: flex-start;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f5eef2;
+      color: #7a6770;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .origin-tag.sister { background: #edf7ff; color: #417191; }
+    .stage-title {
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.35;
+      letter-spacing: -.01em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.7em;
+    }
+
+    .bottom-bar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 12px 28px rgba(70,35,50,.09);
+      backdrop-filter: blur(14px);
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #f1e6eb;
+      overflow: hidden;
+    }
+    .bar > div {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #f39bc1, var(--pink));
+      transition: width .2s ease;
+      border-radius: inherit;
+    }
+
+    .compare-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+    .choice-btn {
+      height: 100%;
+      min-height: 0;
+      border-radius: 22px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(83,37,58,.08);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+    .choice-btn:hover {
+      border-color: rgba(232,93,150,.58);
+      box-shadow: 0 18px 34px rgba(208,58,119,.12);
+    }
+    .choice-thumb {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f5f2f3;
+    }
+    .choice-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .choice-origin {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .choice-title {
+      font-size: clamp(18px, 2vw, 28px);
+      font-weight: 950;
+      line-height: 1.28;
+      letter-spacing: -.02em;
+      min-height: 2.6em;
+    }
+    .choose-label {
+      margin-top: auto;
+      color: var(--pink-strong);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+    .versus {
+      align-self: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--pink-soft);
+      color: var(--pink-strong);
+      font-size: 13px;
+      font-weight: 950;
+      box-shadow: inset 0 0 0 1px rgba(232,93,150,.15);
+    }
+
+    #resultScreen .screen-body {
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    .result-wrap {
+      flex: 0 0 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .result-card {
+      min-height: 0;
+      padding: 14px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at 100% 0%, rgba(232,93,150,.12), transparent 24%), #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .result-title {
+      text-align: center;
+    }
+    .result-title .crown { font-size: 22px; }
+    .result-title h3 {
+      margin: 3px 0 0;
+      font-size: 21px;
+      line-height: 1.15;
+    }
+    .ranking {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .rank-card {
+      min-width: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: 84px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      padding: 9px;
+      border-radius: 16px;
+      background: #fbf8f9;
+      border: 1px solid #f0e7eb;
+    }
+    .rank-card.rank-1 {
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(112px, 148px) minmax(0, 1fr);
+      padding: 12px;
+      background: linear-gradient(135deg, #fffaf1, #fff1d4 62%, #fff7eb);
+      border-color: #ebd39e;
+      box-shadow: 0 12px 28px rgba(132,97,31,.10);
+    }
+    .rank-thumb {
+      width: 84px;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #f5f2f3;
+      box-shadow: 0 6px 16px rgba(83,37,58,.07);
+    }
+    .rank-1 .rank-thumb {
+      width: 100%;
+      max-width: 148px;
+      border-radius: 15px;
+    }
+    .rank-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .rank-copy { min-width: 0; }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+      color: var(--pink-strong);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .rank-1 .rank-badge {
+      color: #a66f00;
+      font-size: 11px;
+    }
+    .rank-name {
+      font-size: 14px;
+      font-weight: 950;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .rank-1 .rank-name {
+      font-size: clamp(20px, 3vw, 27px);
+      line-height: 1.2;
+    }
+    .rank-origin {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .rank-code {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .actions button {
+      min-width: 0;
+      padding: 10px 8px;
+      font-size: 12px;
+    }
+
+    .notes {
+      flex: 0 0 auto;
+      margin: 0;
+      padding: 0 8px 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 20px);
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(29,25,27,.92);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      z-index: 40;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 980px) {
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 8px, 1180px);
+        padding: 4px 0 6px;
+        gap: 4px;
+      }
+
+      /* モバイルではタイトル周りを最小限にして、選択肢へ画面を渡す */
+      .hero {
+        padding: 3px 6px 2px;
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .eyebrow, .hero p { display: none; }
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.15;
+      }
+
+      .screen { border-radius: 18px; }
+      .screen-head {
+        padding: 7px 10px;
+        align-items: center;
+        min-height: 58px;
+      }
+      .step { font-size: 9px; line-height: 1; }
+      .screen-head h2 {
+        margin: 2px 0 0;
+        font-size: 16px;
+        line-height: 1.15;
+      }
+      .screen-head .sub { display: none; }
+      .head-right { gap: 6px; }
+      .counter {
+        min-width: 60px;
+        padding: 6px 8px;
+        border-radius: 13px;
+      }
+      .counter strong { display: inline; font-size: 18px; }
+      .counter span { font-size: 10px; }
+
+      .screen-body {
+        padding: 6px 7px 7px;
+        gap: 6px;
+      }
+      .toolbar { min-height: 32px; gap: 6px; }
+      .toolbar-left { gap: 6px; }
+      .nav-group { gap: 5px; }
+      .nav-btn {
+        width: 31px;
+        height: 31px;
+        border-radius: 10px;
+        font-size: 17px;
+      }
+      .mini-note { font-size: 11px; white-space: nowrap; }
+      .toolbar .secondary {
+        padding: 7px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+      }
+
+      .track-wrap {
+        padding: 5px;
+        border-radius: 15px;
+      }
+      .stage-page { gap: 6px; }
+      .stage-card {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: stretch;
+        gap: 4px;
+        padding: 5px;
+        border-radius: 14px;
+      }
+      .check {
+        top: 7px;
+        right: 7px;
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+      }
+      .thumb {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        height: 0;
+        aspect-ratio: auto;
+        border-radius: 10px;
+      }
+      .thumb img { object-fit: contain; }
+      .meta {
+        flex: 0 0 auto;
+        gap: 1px;
+        min-height: 34px;
+        justify-content: flex-end;
+      }
+      .origin-tag {
+        display: none;
+      }
+      .stage-title {
+        min-height: 0;
+        font-size: 13px;
+        line-height: 1.2;
+        text-align: center;
+        -webkit-line-clamp: 2;
+      }
+
+      .bottom-bar {
+        min-height: 46px;
+        padding: 6px 8px;
+        border-radius: 14px;
+        gap: 8px;
+      }
+      .hint {
+        font-size: 11px;
+        line-height: 1.25;
+      }
+      .bottom-bar .primary {
+        width: auto;
+        min-width: 164px;
+        padding: 10px 12px;
+        font-size: 12px;
+        border-radius: 11px;
+      }
+
+      .notes { display: none; }
+
+      #sortScreen .screen-body {
+        justify-content: flex-start;
+      }
+      .compare-stage {
+        flex: 0 0 auto;
+        min-height: auto;
+        grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+        gap: 6px;
+        align-items: stretch;
+      }
+      .versus { width: 34px; height: 34px; font-size: 10px; }
+      .choice-btn {
+        height: auto;
+        min-height: 0;
+        padding: 8px;
+        border-radius: 16px;
+        gap: 6px;
+      }
+      .choice-thumb { border-radius: 12px; }
+      .choice-title { font-size: clamp(14px, 4vw, 20px); min-height: 2.6em; }
+      .choice-origin { font-size: 9px; }
+      .choose-label { margin-top: 4px; font-size: 10px; }
+
+      .result-card { padding: 8px; gap: 7px; }
+      .result-title .crown { font-size: 18px; }
+      .result-title h3 { font-size: 16px; }
+      .ranking { gap: 6px; }
+      .rank-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 6px;
+        padding: 6px;
+        align-items: center;
+      }
+      .rank-card.rank-1 {
+        grid-template-columns: 94px minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px;
+      }
+      .rank-thumb {
+        width: 58px;
+        border-radius: 10px;
+      }
+      .rank-1 .rank-thumb {
+        width: 100%;
+        max-width: 94px;
+        border-radius: 12px;
+      }
+      .rank-copy {
+        align-self: center;
+      }
+      .rank-badge { margin-bottom: 2px; font-size: 8.5px; }
+      .rank-1 .rank-badge { font-size: 10px; }
+      .rank-name { font-size: 10.5px; line-height: 1.22; }
+      .rank-1 .rank-name { font-size: 17px; }
+      .rank-origin { margin-top: 2px; font-size: 8px; -webkit-line-clamp: 1; }
+      .rank-code { margin-top: 2px; font-size: 7.5px; }
+      .actions { gap: 6px; }
+      .actions button { padding: 8px 6px; font-size: 11px; border-radius: 10px; }
+    }
+
+    @media (max-width: 540px) {
+      .screen-head > div:first-child { min-width: 0; }
+      #resultScreen .screen-head { min-height: 52px; }
+      #resultScreen .screen-body { padding-top: 5px; }
+    }
+
+    /* 320px級の小型端末でも最長の公演名を省略しない */
+    @media (max-width: 340px) {
+      .rank-card:not(.rank-1) .rank-name {
+        font-size: 9.5px;
+        line-height: 1.18;
+        -webkit-line-clamp: 3;
+      }
+      .rank-card:not(.rank-1) .rank-origin { font-size: 7.5px; }
+      .rank-card:not(.rank-1) .rank-code { font-size: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="eyebrow">AKB48 THEATER STAGE SORT</div>
+      <h1>好きな劇場公演ソート</h1>
+      <p>19公演からまず好きな10公演を選択。そこから左対右の二択比較で、あなたのAKB48劇場公演TOP7を作ります。</p>
+    </header>
+
+    <section id="selectScreen" class="screen">
+      <div class="screen-head">
+        <div>
+          <div class="step">STEP 1</div>
+          <h2>好きな10公演を選ぶ</h2>
+          <p class="sub">横にスワイプしながら、好きな10公演だけを選択してください。</p>
+        </div>
+        <div class="head-right">
+          <div class="counter"><strong id="selectedCount">0</strong><span> / 10</span></div>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div class="nav-group">
+              <button id="scrollLeftBtn" class="nav-btn" type="button" aria-label="左へスクロール">‹</button>
+              <button id="scrollRightBtn" class="nav-btn" type="button" aria-label="右へスクロール">›</button>
+            </div>
+            <div class="mini-note">ページ <strong id="pageIndicator">1 / 5</strong></div>
+          </div>
+          <button id="clearBtn" class="secondary" type="button">クリア</button>
+        </div>
+
+        <div class="track-wrap">
+          <div id="stageTrack" class="stage-track"></div>
+        </div>
+
+        <div class="bottom-bar">
+          <div id="selectionHint" class="hint">あと10公演選んでください</div>
+          <button id="startBtn" class="primary" type="button" disabled>10公演でソート開始</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="sortScreen" class="screen hidden">
+      <div class="screen-head">
+        <div>
+          <div class="step">STEP 2</div>
+          <h2>どっちの公演が好き？</h2>
+          <p class="sub">左か右、より好きな方をタップしてください。二択だけで順位が決まります。</p>
+        </div>
+        <div class="head-right">
+          <button id="backBtn" class="ghost" type="button">選び直す</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="progress-row">
+          <span id="compareLabel">比較 1回目</span>
+          <span id="progressLabel">0%</span>
+        </div>
+        <div class="bar"><div id="progressBar"></div></div>
+        <div class="compare-stage">
+          <button id="leftChoice" class="choice-btn" type="button"></button>
+          <div class="versus">VS</div>
+          <button id="rightChoice" class="choice-btn" type="button"></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen hidden">
+      <div class="screen-head">
+        <div>
+          <div class="step">RESULT</div>
+          <h2>あなたの公演TOP7</h2>
+          <p class="sub">選んだ10公演の中から、上位5公演を表示しています。</p>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="result-wrap">
+          <div class="result-card">
+            <div class="result-title">
+              <div class="crown">👑</div>
+              <h3>MY AKB48 STAGE TOP 7</h3>
+            </div>
+            <div id="ranking" class="ranking"></div>
+          </div>
+
+          <div class="actions">
+            <button id="copyBtn" class="secondary" type="button">結果をコピー</button>
+            <button id="shareBtn" class="secondary" type="button">共有する</button>
+            <button id="xBtn" class="secondary" type="button">Xでシェア</button>
+            <button id="restartBtn" class="primary" type="button">もう一度</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="notes">対象：AKB48が正式な劇場公演として上演した、48グループのオリジナルStageセットリスト19公演。公演ジャケットは実際に発売された公式CD／DVDのジャケット画像を使用しています。M.T.に捧ぐは新アルバムのジャケット公開前のため、既発売DVDの公式ジャケットを使用しています。</p>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const stages = [
+      { id: 1, code: 'A1st', title: 'PARTYが始まるよ', origin: 'AKB48 Team A 1st', image: 'https://s.akb48.co.jp/discography/child/231/AKBSRC__A1_JKT_iT_RGBmini.jpg' },
+      { id: 2, code: 'A2nd', title: '会いたかった', origin: 'AKB48 Team A 2nd', image: 'https://s.akb48.co.jp/discography/child/232/AKBSRC__A2_JKT_iT_RGBmini.jpg' },
+      { id: 3, code: 'A3rd', title: '誰かのために', origin: 'AKB48 Team A 3rd', image: 'https://s.akb48.co.jp/discography/child/233/AKBSRC__A3_JKT_iT_RGBmini.jpg' },
+      { id: 4, code: 'A4th', title: 'ただいま 恋愛中', origin: 'AKB48 Team A 4th', image: 'https://s.akb48.co.jp/discography/child/234/AKBSRC__A4_JKT_iT_RGBmini.jpg' },
+      { id: 5, code: 'A5th', title: '恋愛禁止条例', origin: 'AKB48 Team A 5th', image: 'https://s.akb48.co.jp/discography/child/235/AKBSRC__A5_JKT_iT_RGBmini.jpg' },
+      { id: 6, code: 'A6th', title: '目撃者', origin: 'AKB48 Team A 6th', image: 'https://s.akb48.co.jp/discography/child/236/AKBSRC__A6_JKT_iT_RGBmini.jpg' },
+      { id: 7, code: 'A7th', title: 'M.T.に捧ぐ', origin: 'AKB48 Team A 7th', image: 'https://s.akb48.co.jp/discography/all/AKB_D2338_360.png', note: 'DVD jacket' },
+      { id: 8, code: 'K2nd', title: '青春ガールズ', origin: 'AKB48 Team K 2nd', image: 'https://s.akb48.co.jp/discography/child/238/AKBSRC__K2_JKT_iT_RGBmini.jpg' },
+      { id: 9, code: 'K3rd', title: '脳内パラダイス', origin: 'AKB48 Team K 3rd', image: 'https://s.akb48.co.jp/discography/child/239/AKBSRC__K3_JKT_iT_RGB_mini.jpg' },
+      { id: 10, code: 'K4th', title: '最終ベルが鳴る', origin: 'AKB48 Team K 4th', image: 'https://s.akb48.co.jp/discography/child/240/AKBSRC__K4_JKT_iT_RGBmini.jpg' },
+      { id: 11, code: 'K5th', title: '逆上がり', origin: 'AKB48 Team K 5th', image: 'https://s.akb48.co.jp/discography/child/241/AKBSRC__K5_JKT_iT_RGBmini.jpg' },
+      { id: 12, code: 'K6th', title: 'RESET', origin: 'AKB48 Team K 6th', image: 'https://s.akb48.co.jp/discography/child/242/AKBSRC__K6_JKT_iT_RGBmini.jpg' },
+      { id: 13, code: 'B3rd', title: 'パジャマドライブ', origin: 'AKB48 Team B 3rd', image: 'https://s.akb48.co.jp/discography/child/245/AKBSRC_B3_JKT_iT_RGBmini.jpg' },
+      { id: 14, code: 'B4th', title: 'アイドルの夜明け', origin: 'AKB48 Team B 4th', image: 'https://s.akb48.co.jp/discography/child/246/AKBSRC_B4_JKT_iT_RGBmini.jpg' },
+      { id: 15, code: 'B5th', title: 'シアターの女神', origin: 'AKB48 Team B 5th', image: 'https://s.akb48.co.jp/discography/child/247/AKBSRC_B5_JKT_iT_RGBmini.jpg' },
+      { id: 16, code: 'H1st', title: '僕の太陽', origin: 'AKB48 ひまわり組 1st', image: 'https://s.akb48.co.jp/discography/child/248/AKBSRC_H1_JKT_iT_RGBmini.jpg' },
+      { id: 17, code: 'H2nd', title: '夢を死なせるわけにいかない', origin: 'AKB48 ひまわり組 2nd', image: 'https://s.akb48.co.jp/discography/child/249/AKBSRC_H2_JKT_iT_RGBmini.jpg' },
+      { id: 18, code: 'S2nd', title: '手をつなぎながら', origin: 'SKE48 Team S 2nd', image: 'https://www.crownrecord.co.jp/images/52/394/529bcccd70d298b962126428ba962/202_320_102400.jpg', sister: true },
+      { id: 19, code: '18th', title: 'ここからだ', origin: 'AKB48 18th Stage', image: 'https://s.akb48.co.jp/upload/images/1ff5425b7c213300cab202ec12db9394.jpg?t=1765885297' }
+    ];
+
+    const selected = new Set();
+    let currentRuns = [];
+    let nextRuns = [];
+    let mergeState = null;
+    let compareCount = 0;
+    let totalEstimate = 0;
+    let finalRanking = [];
+
+    const $ = (id) => document.getElementById(id);
+    const selectScreen = $('selectScreen');
+    const sortScreen = $('sortScreen');
+    const resultScreen = $('resultScreen');
+    const stageTrack = $('stageTrack');
+
+    function renderStageTrack() {
+      stageTrack.innerHTML = '';
+      const pages = [];
+      for (let i = 0; i < stages.length; i += 4) pages.push(stages.slice(i, i + 4));
+
+      pages.forEach((group, pageIndex) => {
+        const page = document.createElement('div');
+        page.className = 'stage-page';
+        page.dataset.page = String(pageIndex);
+
+        group.forEach(stage => {
+          const isSelected = selected.has(stage.id);
+          const isDisabled = selected.size >= 10 && !isSelected;
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = `stage-card${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`;
+          card.disabled = isDisabled;
+          card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+          card.innerHTML = `
+            <span class="check" aria-hidden="true"></span>
+            <div class="thumb"><img src="${stage.image}" alt="${escapeHtml(stage.title)}の公式ジャケット" loading="lazy"></div>
+            <div class="meta">
+              <span class="origin-tag${stage.sister ? ' sister' : ''}">${escapeHtml(stage.origin)}</span>
+              <span class="stage-title">${escapeHtml(stage.title)}</span>
+            </div>
+          `;
+          card.addEventListener('click', () => toggleStage(stage.id));
+          page.appendChild(card);
+        });
+
+        stageTrack.appendChild(page);
+      });
+      updateSelectionState();
+      updatePageIndicator();
+    }
+
+    function updatePageIndicator() {
+      const indicator = $('pageIndicator');
+      if (!indicator) return;
+      const pageWidth = Math.max(1, stageTrack.clientWidth);
+      const page = Math.max(0, Math.min(4, Math.round(stageTrack.scrollLeft / pageWidth)));
+      indicator.textContent = `${page + 1} / 5`;
+    }
+
+    function toggleStage(id) {
+      if (selected.has(id)) selected.delete(id);
+      else if (selected.size < 10) selected.add(id);
+      renderStageTrack();
+    }
+
+    function updateSelectionState() {
+      const count = selected.size;
+      $('selectedCount').textContent = count;
+      $('startBtn').disabled = count !== 10;
+      $('selectionHint').textContent = count === 10
+        ? '10公演選択済み。ソートを始められます。'
+        : `あと${10 - count}公演選んでください`;
+    }
+
+    function startSort() {
+      const chosen = stages.filter(s => selected.has(s.id));
+      shuffle(chosen);
+      currentRuns = chosen.map(s => [s]);
+      nextRuns = [];
+      mergeState = null;
+      compareCount = 0;
+      totalEstimate = estimateComparisons(chosen.length);
+      finalRanking = [];
+      selectScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      sortScreen.classList.remove('hidden');
+      prepareNextMerge();
+    }
+
+    function estimateComparisons(n) {
+      return Math.max(1, Math.ceil(n * Math.log2(n)));
+    }
+
+    function prepareNextMerge() {
+      if (currentRuns.length === 1 && nextRuns.length === 0) {
+        finishSort(currentRuns[0]);
+        return;
+      }
+      if (currentRuns.length === 0) {
+        currentRuns = nextRuns;
+        nextRuns = [];
+        prepareNextMerge();
+        return;
+      }
+      if (currentRuns.length === 1) {
+        nextRuns.push(currentRuns.shift());
+        currentRuns = nextRuns;
+        nextRuns = [];
+        prepareNextMerge();
+        return;
+      }
+      mergeState = {
+        left: currentRuns.shift(),
+        right: currentRuns.shift(),
+        i: 0,
+        j: 0,
+        merged: []
+      };
+      renderComparison();
+    }
+
+    function renderComparison() {
+      const left = mergeState.left[mergeState.i];
+      const right = mergeState.right[mergeState.j];
+      $('leftChoice').innerHTML = choiceMarkup(left, '← 左を選ぶ');
+      $('rightChoice').innerHTML = choiceMarkup(right, '右を選ぶ →');
+      $('compareLabel').textContent = `比較 ${compareCount + 1}回目`;
+      const percent = Math.min(96, Math.round((compareCount / totalEstimate) * 100));
+      $('progressLabel').textContent = `${percent}%`;
+      $('progressBar').style.width = `${percent}%`;
+    }
+
+    function choiceMarkup(stage, label) {
+      return `
+        <div class="choice-thumb"><img src="${stage.image}" alt="${escapeHtml(stage.title)}のジャケット風画像"></div>
+        <div class="choice-origin">${escapeHtml(stage.origin)}</div>
+        <div class="choice-title">${escapeHtml(stage.title)}</div>
+        <div class="choose-label">${label}</div>
+      `;
+    }
+
+    function choose(side) {
+      if (!mergeState) return;
+      compareCount++;
+      if (side === 'left') mergeState.merged.push(mergeState.left[mergeState.i++]);
+      else mergeState.merged.push(mergeState.right[mergeState.j++]);
+
+      if (mergeState.i >= mergeState.left.length) {
+        mergeState.merged.push(...mergeState.right.slice(mergeState.j));
+        completeMerge();
+      } else if (mergeState.j >= mergeState.right.length) {
+        mergeState.merged.push(...mergeState.left.slice(mergeState.i));
+        completeMerge();
+      } else {
+        renderComparison();
+      }
+    }
+
+    function completeMerge() {
+      nextRuns.push(mergeState.merged);
+      mergeState = null;
+      prepareNextMerge();
+    }
+
+    function finishSort(ranking) {
+      finalRanking = ranking;
+      $('progressLabel').textContent = '100%';
+      $('progressBar').style.width = '100%';
+      renderRanking();
+      sortScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+    }
+
+    function renderRanking() {
+      const box = $('ranking');
+      box.innerHTML = '';
+      finalRanking.slice(0, 7).forEach((stage, idx) => {
+        const card = document.createElement('div');
+        card.className = `rank-card rank-${idx + 1}`;
+        card.innerHTML = `
+          <div class="rank-thumb"><img src="${stage.image}" alt="${escapeHtml(stage.title)}の公式ジャケット"></div>
+          <div class="rank-copy">
+            <div class="rank-badge">${rankLabel(idx)}</div>
+            <div class="rank-name">${escapeHtml(stage.title)}</div>
+            <div class="rank-origin">${escapeHtml(stage.origin)}</div>
+            <div class="rank-code">${escapeHtml(stage.code)}</div>
+          </div>
+        `;
+        box.appendChild(card);
+      });
+    }
+
+    function rankLabel(i) {
+      if (i === 0) return '🥇 1位';
+      if (i === 1) return '🥈 2位';
+      if (i === 2) return '🥉 3位';
+      return `${i + 1}位`;
+    }
+
+    function resultText() {
+      const lines = finalRanking.slice(0, 7).map((s, i) => `${i + 1}位 ${s.title}`);
+      return `私のAKB48劇場公演TOP7\n\n${lines.join('\n')}\n\n#AKB48劇場公演ソート`;
+    }
+
+    function shareText() {
+      const first = finalRanking[0];
+      if (!first) return '#AKB48劇場公演ソート';
+      return `私のAKB48劇場公演ソート1位は「${first.title}」でした！\n\n#AKB48劇場公演ソート`;
+    }
+
+    function publicPageUrl() {
+      if (!/^https?:$/.test(location.protocol)) return '';
+      return `${location.origin}${location.pathname}`;
+    }
+
+    async function copyResult() {
+      const text = resultText();
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('結果をコピーしました');
+      } catch {
+        fallbackCopy(text);
+      }
+    }
+
+    async function shareResult() {
+      const text = shareText();
+      const url = publicPageUrl();
+
+      if (navigator.share) {
+        try {
+          const data = { title: 'AKB48 劇場公演ソート', text };
+          if (url) data.url = url;
+          await navigator.share(data);
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      const fallback = url ? `${text}\n\n${url}` : text;
+      try {
+        await navigator.clipboard.writeText(fallback);
+        toast(url ? '1位とリンクをコピーしました' : '1位をコピーしました');
+      } catch {
+        fallbackCopy(fallback);
+      }
+    }
+
+    function shareToX() {
+      const params = new URLSearchParams({ text: shareText() });
+      const url = publicPageUrl();
+      if (url) params.set('url', url);
+      window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    }
+
+    function restart() {
+      selected.clear();
+      currentRuns = [];
+      nextRuns = [];
+      mergeState = null;
+      compareCount = 0;
+      totalEstimate = 0;
+      finalRanking = [];
+      resultScreen.classList.add('hidden');
+      sortScreen.classList.add('hidden');
+      selectScreen.classList.remove('hidden');
+      renderStageTrack();
+      stageTrack.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    function backToSelection() {
+      sortScreen.classList.add('hidden');
+      selectScreen.classList.remove('hidden');
+      renderStageTrack();
+    }
+
+    function clearSelection() {
+      selected.clear();
+      renderStageTrack();
+      stageTrack.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    function scrollTrack(dir) {
+      const amount = stageTrack.clientWidth;
+      stageTrack.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast('結果をコピーしました');
+    }
+
+    let toastTimer;
+    function toast(message) {
+      const el = $('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1700);
+    }
+
+    $('scrollLeftBtn').addEventListener('click', () => scrollTrack(-1));
+    $('scrollRightBtn').addEventListener('click', () => scrollTrack(1));
+    stageTrack.addEventListener('scroll', () => requestAnimationFrame(updatePageIndicator), { passive: true });
+    $('clearBtn').addEventListener('click', clearSelection);
+    $('startBtn').addEventListener('click', startSort);
+    $('backBtn').addEventListener('click', backToSelection);
+    $('leftChoice').addEventListener('click', () => choose('left'));
+    $('rightChoice').addEventListener('click', () => choose('right'));
+    $('copyBtn').addEventListener('click', copyResult);
+    $('shareBtn').addEventListener('click', shareResult);
+    $('xBtn').addEventListener('click', shareToX);
+    $('restartBtn').addEventListener('click', restart);
+
+    renderStageTrack();
+  </script>
+</body>
+</html>
